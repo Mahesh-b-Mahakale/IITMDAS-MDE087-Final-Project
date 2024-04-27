@@ -1,0 +1,222 @@
+import pandas as pd
+import numpy as np
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.svm import LinearSVC
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Download NLTK resources
+nltk.download('punkt')
+nltk.download('stopwords')
+
+# Load dataset
+data = pd.read_csv('healthcare_reviews.csv') 
+
+# Data preprocessing
+stop_words = set(stopwords.words('english'))
+
+def preprocess_text(text):
+    # Tokenize words
+    tokens = word_tokenize(text)
+    # Remove stop words and convert to lowercase
+    tokens = [word.lower() for word in tokens if word.isalpha() and word.lower() not in stop_words]
+    return ' '.join(tokens)
+
+data['clean_text'] = data['text'].apply(preprocess_text)
+
+# Split dataset into train and test sets
+X_train, X_test, y_train, y_test = train_test_split(data['clean_text'], data['sentiment'], test_size=0.2, random_state=42)
+
+# Feature extraction using TF-IDF
+vectorizer = TfidfVectorizer()
+X_train_tfidf = vectorizer.fit_transform(X_train)
+X_test_tfidf = vectorizer.transform(X_test)
+
+# Train a Linear SVM classifier
+clf = LinearSVC()
+clf.fit(X_train_tfidf, y_train)
+
+# Predictions
+y_pred = clf.predict(X_test_tfidf)
+
+# Model evaluation
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# Confusion matrix
+conf_mat = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_mat, annot=True, fmt='d', cmap="Blues", xticklabels=['Negative', 'Neutral', 'Positive'], yticklabels=['Negative', 'Neutral', 'Positive'])
+plt.xlabel('Predicted')
+
+plt.ylabel('Actual')
+plt.title('Confusion Matrix')
+plt.show()
+
+##Project 2:
+##Problem:
+
+# Load dataset
+data = pd.read_csv('hospital_readmissions.csv')
+
+# Data processing
+# Assuming 'readmitted' column contains values 'YES' for readmissions within 30 days and 'NO' otherwise
+data['readmitted'] = data['readmitted'].apply(lambda x: 1 if x == 'YES' else 0)
+
+# Feature Engineering
+# In this example, we'll just use a subset of features for simplicity
+features = ['age', 'num_lab_procedures', 'num_procedures', 'num_medications', 'number_diagnoses']
+
+X = data[features]
+y = data['readmitted']
+
+# Split dataset into train and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Feature scaling
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Model building
+model = LogisticRegression()
+model.fit(X_train_scaled, y_train)
+
+# Model evaluation
+y_pred = model.predict(X_test_scaled)
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# Confusion matrix
+conf_mat = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_mat, annot=True, fmt='d', cmap="Blues", xticklabels=['Not Readmitted', 'Readmitted'], yticklabels=['Not Readmitted', 'Readmitted'])
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('Confusion Matrix')
+plt.show()
+
+
+##Project 3
+##Problem :
+ 
+# Generate sample industrial equipment data (replace this with your actual data loading)
+# Example: Generating random data for demonstration purposes
+np.random.seed(42)
+num_samples = 1000
+num_features = 5
+normal_data = np.random.normal(loc=0, scale=1, size=(num_samples, num_features))
+anomaly_data = np.random.normal(loc=5, scale=2, size=(int(num_samples * 0.1), num_features))  # Introduce anomalies
+
+# Combine normal and anomaly data
+data = np.vstack((normal_data, anomaly_data))
+labels = np.hstack((np.zeros(len(normal_data)), np.ones(len(anomaly_data))))
+
+# Data preprocessing (if necessary)
+# You may need to perform feature scaling or other preprocessing steps depending on your data
+
+# Split dataset into train and test sets
+X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, random_state=42)
+
+# Anomaly Detection Model (Isolation Forest)
+model = IsolationForest(random_state=42)
+model.fit(X_train)
+
+# Predict anomalies
+y_pred_train = model.predict(X_train)
+y_pred_test = model.predict(X_test)
+
+# Model Evaluation
+# Convert predictions to binary labels (1 for anomaly, -1 for normal)
+y_pred_train_labels = np.where(y_pred_train == 1, 0, 1)
+y_pred_test_labels = np.where(y_pred_test == 1, 0, 1)
+
+# Confusion matrix and classification report
+print("Train Set Performance:")
+print(confusion_matrix(y_train, y_pred_train_labels))
+print(classification_report(y_train, y_pred_train_labels))
+
+print("\nTest Set Performance:")
+print(confusion_matrix(y_test, y_pred_test_labels))
+print(classification_report(y_test, y_pred_test_labels))
+# Visualization and Reporting
+# Visualize the anomalies detected
+plt.figure(figsize=(10, 6))
+plt.scatter(X_test[:, 0], X_test[:, 1], c=y_pred_test_labels, cmap='coolwarm')
+plt.title('Anomaly Detection Results (Test Set)')
+plt.xlabel('Feature 1')
+plt.ylabel('Feature 2')
+plt.colorbar(label='Anomaly (1) / Normal (0)')
+plt.show()
+
+##Project 4 :
+##Problem:
+
+
+# Load dataset
+data = pd.read_csv('loan_data.csv') 
+
+# Data preprocessing
+# Assuming 'default' column contains binary labels (1 for default, 0 otherwise)
+# Drop irrelevant columns if needed
+
+
+data.drop(['customer_id', 'name'], axis=1, inplace=True)
+
+
+# Handling missing values
+data.fillna(data.mean(), inplace=True)  # Imputing missing values with mean (you can choose other strategies)
+
+# Convert categorical variables into dummy/indicator variables
+data = pd.get_dummies(data, columns=['education', 'marital_status', 'employment_status'])
+
+# Separate features and target variable
+X = data.drop('default', axis=1)
+y = data['default']
+
+# Split dataset into train and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Model building
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+# Model evaluation
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# Confusion matrix
+conf_mat = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_mat, annot=True, fmt='d', cmap="Blues", xticklabels=['Not Default', 'Default'], yticklabels=['Not Default', 'Default'])
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('Confusion Matrix')
+plt.show()
+
+# Interpretability
+# Feature importance
+feature_importance = pd.Series(model.coef_[0], index=X.columns)
+feature_importance_sorted = feature_importance.abs().sort_values(ascending=False)
+print("\nTop 5 Features Importance:")
+print(feature_importance_sorted[:5])
+
+
+
+
+
